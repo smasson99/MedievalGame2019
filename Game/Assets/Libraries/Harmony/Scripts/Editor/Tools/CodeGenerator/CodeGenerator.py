@@ -11,9 +11,12 @@ CONSTANTS
 """
 
 IGNORED_FILE_PATH_KEYWORD = [
-    'Visuals',
+    'Prefabs',
+	'Packages',
     'Scenes',
-	'Sounds'
+	'Sounds',
+	'Videos',
+	'Visuals'
 ]
 
 """
