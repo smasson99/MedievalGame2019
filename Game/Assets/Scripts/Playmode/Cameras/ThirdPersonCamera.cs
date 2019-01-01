@@ -11,16 +11,24 @@ namespace Game
         [Tooltip("The distance to keep between the player and the camera.")] [SerializeField]
         private float cameraOffsetFromPlayer = 5;
 
+        [Tooltip("The translation speed for the camera.")] [SerializeField]
+        private float cameraTranslationSpeed = 10f;
+        
         [Tooltip("The rotation speed for the camera.")] [SerializeField]
         private float cameraRotationSpeed = 10f;
 
-        [Tooltip("The minimum rotation in degrees from the camera and the up of its follow target.")] [SerializeField]
+        [Header("Limits")]
+        [Tooltip("The minimum rotation in degrees from the camera and the up of its follow target.")]
+        [SerializeField]
         private float minUpRotation = 90;
-        
+
         [Tooltip("The minimum rotation in degrees from the camera and the up of its follow target.")] [SerializeField]
         private float maxUpRotation = 150;
-        
-        private Vector2 movingDirection;
+
+        [Tooltip("The offset of the camera \"LookAt\" point.")] [SerializeField]
+        private Vector3 lookAtOffset = new Vector3(0, 2, 0);
+
+        private Vector2 rightJoysticDirection;
 
         private void Awake()
         {
@@ -35,44 +43,67 @@ namespace Game
             }
         }
 
-        private void Update()
+        private void UpdateCameraRotation()
         {
-            transform.LookAt(targetTransform);
-
             Vector3 targetVector3 = targetTransform.position - transform.position;
             float targetUpAngle = Vector3.Angle(targetVector3, targetTransform.up);
-            
+
             if (targetUpAngle >= minUpRotation && targetUpAngle <= maxUpRotation)
             {
-                transform.Translate(movingDirection * cameraRotationSpeed * Time.deltaTime);
+                transform.Translate(rightJoysticDirection * cameraRotationSpeed * Time.deltaTime);
             }
             else
             {
                 if (targetUpAngle < minUpRotation)
                 {
-                    if (movingDirection.y >= 0)
+                    if (rightJoysticDirection.y >= 0)
                     {
-                        transform.Translate(movingDirection * cameraRotationSpeed * Time.deltaTime);
+                        transform.Translate(rightJoysticDirection * cameraRotationSpeed * Time.deltaTime);
                     }
                     else
                     {
-                        Vector2 newDirection = new Vector2(movingDirection.x, 0);
+                        Vector2 newDirection = new Vector2(rightJoysticDirection.x, 0);
                         transform.Translate(newDirection * cameraRotationSpeed * Time.deltaTime);
                     }
                 }
                 else if (targetUpAngle > maxUpRotation)
                 {
-                    if (movingDirection.y < 0)
+                    if (rightJoysticDirection.y < 0)
                     {
-                        transform.Translate(movingDirection * cameraRotationSpeed * Time.deltaTime);
+                        transform.Translate(rightJoysticDirection * cameraRotationSpeed * Time.deltaTime);
                     }
                     else
                     {
-                        Vector2 newDirection = new Vector2(movingDirection.x, 0);
+                        Vector2 newDirection = new Vector2(rightJoysticDirection.x, 0);
                         transform.Translate(newDirection * cameraRotationSpeed * Time.deltaTime);
                     }
                 }
             }
+        }
+
+        private void MoveCamera()
+        {
+            Vector3 targetVector = targetTransform.position - transform.position;
+
+            targetVector.y = 0;
+
+            if (Vector3.Distance(new Vector3(targetTransform.position.x, 0, targetTransform.position.z),
+                    new Vector3(transform.position.x, 0, transform.position.z)) >= cameraOffsetFromPlayer)
+            {
+                transform.Translate(targetVector * cameraTranslationSpeed * Time.deltaTime, Space.World);
+                Debug.Log("Translate");
+            }
+        }
+
+        private void Update()
+        {
+            //transform.LookAt(targetTransform);
+            transform.LookAt(new Vector3(targetTransform.position.x + lookAtOffset.x,
+                targetTransform.position.y + lookAtOffset.y, targetTransform.position.z + lookAtOffset.z));
+
+            UpdateCameraRotation();
+            
+            MoveCamera();
         }
 
         public void SetTargetTransform(Transform newTarget)
@@ -82,7 +113,7 @@ namespace Game
 
         public void UpdateMovingDirection(Vector2 direction)
         {
-            movingDirection = direction;
+            rightJoysticDirection = direction;
         }
     }
 }
