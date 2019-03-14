@@ -5,49 +5,86 @@ namespace Game
 {
     public class Player : MonoBehaviour
     {
+        [Tooltip("The maximum strength to apply to activate the status IsWalking to the player.")] [SerializeField][UnityEngine.Range(0, 1)]
+        private float isWalkingThreshold = 0.25f;
+
         private XboxOneControllerInput xboxOneControllerInput;
         private ThirdPersonCamera thirdPersonCamera;
 
-        private Vector2 leftJoysticDirection;
+        private Vector3 leftJoysticDirection;
+        private CharacterController characterController;
 
-        [Tooltip("The rotation speed of the player.")] [SerializeField]
-        private float rotationSpeed = 3.5f;
+        private PlayerAnimator playerAnimator;
+
+        private enum PlayerState
+        {
+            Disabled,
+            Idle,
+            Walk,
+            Run
+        }
+
+        private PlayerState currentPlayerState;
+
+        private PlayerState CurrentPlayerState
+        {
+            get => currentPlayerState;
+            set
+            {
+                if (value != currentPlayerState)
+                {
+                    currentPlayerState = value;
+                    
+                    UpdateState();
+                }
+            }
+        }
+
+        [Tooltip("The walk speed of the player.")] [SerializeField] [Range(0.01f, 100)]
+        private float walkSpeed = 3.5f;
+        
+        [Tooltip("The run speed of the player.")] [SerializeField] [Range(0.01f, 100)]
+        private float runSpeed = 3.5f;
+
+        private void UpdateState()
+        {
+            switch (currentPlayerState)
+            {
+                case PlayerState.Idle:
+                    playerAnimator.SetState(PlayerAnimator.PlayerAnimatorStatus.Idle);
+                    break;
+                case PlayerState.Walk:
+                    playerAnimator.SetState(PlayerAnimator.PlayerAnimatorStatus.Walk);
+                    break;
+                case PlayerState.Run:
+                    playerAnimator.SetState(PlayerAnimator.PlayerAnimatorStatus.Run);
+                    break;
+                case PlayerState.Disabled:
+                    playerAnimator.SetState(PlayerAnimator.PlayerAnimatorStatus.Idle);
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+        }
 
         private void Awake()
         {
-            InitializeComponents();
+            GetComponents();
             InitializeValues();
-            VerifyValues();
             VerifyComponents();
         }
 
-        private void OnEnable()
-        {
-            SubscribeToXBoxOneControllerInputs();
-        }
-
-        private void OnDisable()
-        {
-            UnSubscribeToXBoxOneControllerInputs();
-        }
-
-        private void InitializeComponents()
+        private void GetComponents()
         {
             xboxOneControllerInput = GetComponentInChildren<XboxOneControllerInput>();
             thirdPersonCamera = Camera.main?.GetComponent<ThirdPersonCamera>();
+            characterController = GetComponent<CharacterController>();
+            playerAnimator = GetComponentInChildren<PlayerAnimator>();
         }
 
         private void InitializeValues()
         {
             leftJoysticDirection = Vector2.zero;
-        }
-
-        private void VerifyValues()
-        {
-            if (rotationSpeed <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(rotationSpeed) + " must be superior to zero.");
-            }
         }
 
         private void VerifyComponents()
@@ -61,6 +98,26 @@ namespace Game
             {
                 throw new NullReferenceException(nameof(thirdPersonCamera) + " not found!");
             }
+
+            if (characterController == null)
+            {
+                throw new NullReferenceException(nameof(CharacterController) + "not found!");
+            }
+
+            if (characterController == null)
+            {
+                throw new NullReferenceException(nameof(playerAnimator) + "not found!");
+            }
+        }
+
+        private void OnEnable()
+        {
+            SubscribeToXBoxOneControllerInputs();
+        }
+
+        private void OnDisable()
+        {
+            UnSubscribeToXBoxOneControllerInputs();
         }
 
         private void SubscribeToXBoxOneControllerInputs()
@@ -77,31 +134,56 @@ namespace Game
 
         private void UpdateLeftJoysticDirection(Vector2 direction)
         {
-            leftJoysticDirection = direction;
+            leftJoysticDirection = new Vector3(direction.x, 0, direction.y);
         }
 
         private void UpdateRightJoystickDirection(Vector2 direction)
         {
-            thirdPersonCamera.UpdateMovingDirection(direction);
+            thirdPersonCamera.UpdateRightJoysticDirection(direction);
         }
 
         private bool LeftJoysticIsUsed()
         {
-            return leftJoysticDirection.x != 0 && leftJoysticDirection.y != 0;
+            return leftJoysticDirection != Vector3.zero;
         }
 
-        private void Rotate()
+        private bool IsWalking()
+        {
+            float magnitude = xboxOneControllerInput.LeftJoysticDirection.sqrMagnitude;
+            
+            return LeftJoysticIsUsed() && magnitude < isWalkingThreshold * isWalkingThreshold;
+        }
+
+        private void Move()
+        {
+            bool isWalking = IsWalking();
+            
+            float movingSpeed = isWalking ? walkSpeed : runSpeed;
+            
+            characterController.Move(transform.forward * movingSpeed *
+                                     Time.deltaTime);
+            
+            CurrentPlayerState = isWalking ? PlayerState.Walk : PlayerState.Run;
+        }
+
+        private void SetLookRotation(Vector3 direction)
+        {
+            transform.rotation = Quaternion.LookRotation(direction);
+        }
+
+        private void Update()
         {
             if (LeftJoysticIsUsed())
             {
-                float angle = Mathf.Atan2(leftJoysticDirection.x, leftJoysticDirection.y) * Mathf.Rad2Deg;
-                transform.rotation = Quaternion.Euler(new Vector3(0, angle, 0));
+                SetLookRotation(leftJoysticDirection);
+                Move();
             }
-        }
-        
-        private void Update()
-        {
-            Rotate();
+            else
+            {
+                CurrentPlayerState = PlayerState.Idle;
+            }
+            
+            Debug.Log(CurrentPlayerState);
         }
     }
 }

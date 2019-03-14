@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
 using XInputDotNetPure;
 
 namespace Game
@@ -27,8 +24,9 @@ namespace Game
 
         [Tooltip(
             "Minimum length of a thumbstick direction which is considered a non-null direction. Cannot be modified at runtime.")]
-        [SerializeField]
+        [SerializeField] [Range(0, 1)]
         private float directionThreshold = 0.25f;
+        
 
 #if UNITY_EDITOR
         [Header("Debug")]

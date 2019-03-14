@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace Game
@@ -9,13 +11,16 @@ namespace Game
         private Transform targetTransform;
 
         [Tooltip("The distance to keep between the player and the camera.")] [SerializeField]
-        private float cameraOffsetFromPlayer = 5;
+        private float distanceFromTarget = 5;
 
         [Tooltip("The translation speed for the camera.")] [SerializeField]
-        private float cameraTranslationSpeed = 10f;
-        
+        private float translationSpeed = 10f;
+
         [Tooltip("The rotation speed for the camera.")] [SerializeField]
-        private float cameraRotationSpeed = 10f;
+        private float rotationSpeed = 10f;
+
+        [Tooltip("The rotation speed for the camera when auto-adjust.")] [SerializeField]
+        private float autoAdjustRotationSpeed = 6f;
 
         [Header("Limits")]
         [Tooltip("The minimum rotation in degrees from the camera and the up of its follow target.")]
@@ -25,10 +30,11 @@ namespace Game
         [Tooltip("The minimum rotation in degrees from the camera and the up of its follow target.")] [SerializeField]
         private float maxUpRotation = 150;
 
-        [Tooltip("The offset of the camera \"LookAt\" point.")] [SerializeField]
-        private Vector3 lookAtOffset = new Vector3(0, 2, 0);
+        private Vector2 leftJoysticDirection;
+        private Vector3 rightJoysticDirection;
 
-        private Vector2 rightJoysticDirection;
+        private bool canAdjustCamera;
+        private Coroutine adjustCameraCoroutine;
 
         private void Awake()
         {
@@ -43,14 +49,14 @@ namespace Game
             }
         }
 
-        private void UpdateCameraRotation()
+        private void RotateCameraInRightJoysticDirection()
         {
             Vector3 targetVector3 = targetTransform.position - transform.position;
             float targetUpAngle = Vector3.Angle(targetVector3, targetTransform.up);
 
             if (targetUpAngle >= minUpRotation && targetUpAngle <= maxUpRotation)
             {
-                transform.Translate(rightJoysticDirection * cameraRotationSpeed * Time.deltaTime);
+                transform.Translate(rightJoysticDirection * rotationSpeed * Time.deltaTime);
             }
             else
             {
@@ -58,52 +64,91 @@ namespace Game
                 {
                     if (rightJoysticDirection.y >= 0)
                     {
-                        transform.Translate(rightJoysticDirection * cameraRotationSpeed * Time.deltaTime);
+                        transform.Translate(rightJoysticDirection * rotationSpeed * Time.deltaTime);
                     }
                     else
                     {
                         Vector2 newDirection = new Vector2(rightJoysticDirection.x, 0);
-                        transform.Translate(newDirection * cameraRotationSpeed * Time.deltaTime);
+                        transform.Translate(newDirection * rotationSpeed * Time.deltaTime);
                     }
                 }
                 else if (targetUpAngle > maxUpRotation)
                 {
                     if (rightJoysticDirection.y < 0)
                     {
-                        transform.Translate(rightJoysticDirection * cameraRotationSpeed * Time.deltaTime);
+                        transform.Translate(rightJoysticDirection * rotationSpeed * Time.deltaTime);
                     }
                     else
                     {
                         Vector2 newDirection = new Vector2(rightJoysticDirection.x, 0);
-                        transform.Translate(newDirection * cameraRotationSpeed * Time.deltaTime);
+                        transform.Translate(newDirection * rotationSpeed * Time.deltaTime);
                     }
                 }
             }
         }
 
-        private void MoveCamera()
+        private void MoveCameraToTarget()
         {
             Vector3 targetVector = targetTransform.position - transform.position;
 
             targetVector.y = 0;
 
             if (Vector3.Distance(new Vector3(targetTransform.position.x, 0, targetTransform.position.z),
-                    new Vector3(transform.position.x, 0, transform.position.z)) >= cameraOffsetFromPlayer)
+                    new Vector3(transform.position.x, 0, transform.position.z)) >= distanceFromTarget)
             {
-                transform.Translate(targetVector * cameraTranslationSpeed * Time.deltaTime, Space.World);
-                Debug.Log("Translate");
+                transform.Translate(targetVector * translationSpeed * Time.deltaTime, Space.World);
             }
+        }
+
+        private void MoveCamera(bool right)
+        {
+            if (right)
+            {
+                transform.Translate(Vector3.right * rotationSpeed * Time.deltaTime);
+            }
+            else
+            {
+                transform.Translate(Vector3.left * rotationSpeed * Time.deltaTime);
+            }
+        }
+
+        private void StopAdjustCamera()
+        {
+            canAdjustCamera = false;
+            StopCoroutine(adjustCameraCoroutine);
+            adjustCameraCoroutine = null;
+        }
+
+        private bool LeftJoysticIsUsed()
+        {
+            return leftJoysticDirection != Vector2.zero;
+        }
+
+        private bool RightJoysticIsUsed()
+        {
+            return rightJoysticDirection != Vector3.zero;
         }
 
         private void Update()
         {
-            //transform.LookAt(targetTransform);
-            transform.LookAt(new Vector3(targetTransform.position.x + lookAtOffset.x,
-                targetTransform.position.y + lookAtOffset.y, targetTransform.position.z + lookAtOffset.z));
+            if (RightJoysticIsUsed())
+            {
+                
+            }
+        }
 
-            UpdateCameraRotation();
+        private void LateUpdate()
+        {
+            transform.position = -targetTransform.forward * distanceFromTarget + targetTransform.position;
             
-            MoveCamera();
+            transform.LookAt(targetTransform);
+        }
+
+        private IEnumerator AdjustCameraIn(float numberOfSeconds)
+        {
+            yield return new WaitForSeconds(numberOfSeconds);
+
+            canAdjustCamera = true;
         }
 
         public void SetTargetTransform(Transform newTarget)
@@ -111,9 +156,14 @@ namespace Game
             targetTransform = newTarget;
         }
 
-        public void UpdateMovingDirection(Vector2 direction)
+        public void UpdateLeftJoysticDirection(Vector2 direction)
         {
-            rightJoysticDirection = direction;
+            leftJoysticDirection = direction;
+        }
+
+        public void UpdateRightJoysticDirection(Vector2 direction)
+        {
+            rightJoysticDirection = new Vector3(direction.x, 0, direction.y);
         }
     }
 }
