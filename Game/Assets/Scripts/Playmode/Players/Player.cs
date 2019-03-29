@@ -1,12 +1,20 @@
 ﻿using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Game
 {
     public class Player : MonoBehaviour
     {
-        [Tooltip("The maximum strength to apply to activate the status IsWalking to the player.")] [SerializeField][UnityEngine.Range(0, 1)]
+        [Tooltip("The maximum strength to apply to activate the status IsWalking to the player.")]
+        [SerializeField]
+        [Range(0, 1)]
         private float isWalkingThreshold = 0.25f;
+
+        [Tooltip("The delay in seconds before moving the player.")] [SerializeField] [Range(0, 2.3f)]
+        private float moveDelayInSeconds = 0;
+
+        private bool canMove;
 
         private XboxOneControllerInput xboxOneControllerInput;
         private ThirdPersonCamera thirdPersonCamera;
@@ -34,7 +42,7 @@ namespace Game
                 if (value != currentPlayerState)
                 {
                     currentPlayerState = value;
-                    
+
                     UpdateState();
                 }
             }
@@ -42,7 +50,7 @@ namespace Game
 
         [Tooltip("The walk speed of the player.")] [SerializeField] [Range(0.01f, 100)]
         private float walkSpeed = 3.5f;
-        
+
         [Tooltip("The run speed of the player.")] [SerializeField] [Range(0.01f, 100)]
         private float runSpeed = 3.5f;
 
@@ -85,6 +93,7 @@ namespace Game
         private void InitializeValues()
         {
             leftJoysticDirection = Vector2.zero;
+            canMove = false;
         }
 
         private void VerifyComponents()
@@ -150,19 +159,19 @@ namespace Game
         private bool IsWalking()
         {
             float magnitude = xboxOneControllerInput.LeftJoysticDirection.sqrMagnitude;
-            
+
             return LeftJoysticIsUsed() && magnitude < isWalkingThreshold * isWalkingThreshold;
         }
 
         private void Move()
         {
             bool isWalking = IsWalking();
-            
+
             float movingSpeed = isWalking ? walkSpeed : runSpeed;
-            
+
             characterController.Move(transform.forward * movingSpeed *
                                      Time.deltaTime);
-            
+
             CurrentPlayerState = isWalking ? PlayerState.Walk : PlayerState.Run;
         }
 
@@ -176,14 +185,13 @@ namespace Game
             if (LeftJoysticIsUsed())
             {
                 SetLookRotation(leftJoysticDirection);
+
                 Move();
             }
             else
             {
                 CurrentPlayerState = PlayerState.Idle;
             }
-            
-            Debug.Log(CurrentPlayerState);
         }
     }
 }

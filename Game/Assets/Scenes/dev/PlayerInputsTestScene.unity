@@ -112,19 +112,19 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!1 &336693012 stripped
+--- !u!1 &133572701 stripped
 GameObject:
-  m_CorrespondingSourceObject: {fileID: 8976617942694199999, guid: 703d5cbce984cd74194101308e3038cf,
+  m_CorrespondingSourceObject: {fileID: 8976617942913611899, guid: 703d5cbce984cd74194101308e3038cf,
     type: 3}
   m_PrefabInstance: {fileID: 8976617942424546090}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &336693013
+--- !u!114 &133572708
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 336693012}
+  m_GameObject: {fileID: 133572701}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a5b40f3865139184c8f30ca391b99a56, type: 3}
@@ -133,6 +133,25 @@ MonoBehaviour:
   idleTriggerName: IdleTrigger
   walkTriggerName: WalkTrigger
   runTriggerName: RunTrigger
+--- !u!95 &133572709
+Animator:
+  serializedVersion: 3
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 133572701}
+  m_Enabled: 1
+  m_Avatar: {fileID: 9000000, guid: 870550569984eeb49aa647ddfb14cca1, type: 3}
+  m_Controller: {fileID: 9100000, guid: cdbdb9bd7a4548d4a8effaea48f28cfc, type: 2}
+  m_CullingMode: 1
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorControllerStateOnDisable: 0
 --- !u!4 &565705121 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8976617942970733195, guid: 703d5cbce984cd74194101308e3038cf,
@@ -808,7 +827,7 @@ PrefabInstance:
     - target: {fileID: 8976617942913611903, guid: 703d5cbce984cd74194101308e3038cf,
         type: 3}
       propertyPath: m_Enabled
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8976617942913611901, guid: 703d5cbce984cd74194101308e3038cf,
         type: 3}
@@ -835,6 +854,11 @@ PrefabInstance:
       propertyPath: m_Controller
       value: 
       objectReference: {fileID: 9100000, guid: cdbdb9bd7a4548d4a8effaea48f28cfc, type: 2}
+    - target: {fileID: 8976617942686822783, guid: 703d5cbce984cd74194101308e3038cf,
+        type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 8976617942970733194, guid: 703d5cbce984cd74194101308e3038cf,
         type: 3}
       propertyPath: m_IsActive
